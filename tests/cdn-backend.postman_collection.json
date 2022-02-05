@@ -1,0 +1,1683 @@
+{
+  "info": {
+    "_postman_id": "51f6e561-411b-40db-b43e-12973f5b2dbc",
+    "name": "cdn-backend",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "data preparation",
+      "item": [
+        {
+          "name": "auth",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var response_json = pm.response.json();\r",
+                  "var token = response_json.access_token;\r",
+                  "pm.collectionVariables.set('token', token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "name": "Content-Type",
+                "type": "text",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "",
+                "type": "text",
+                "value": ""
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "client_id",
+                  "value": "{{devClientId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "grant_type",
+                  "value": "client_credentials",
+                  "type": "text"
+                },
+                {
+                  "key": "client_secret",
+                  "value": "{{devClientSecret}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "https://auth.youwol.com/auth/realms/youwol/protocol/openid-connect/token",
+              "protocol": "https",
+              "host": [
+                "auth",
+                "youwol",
+                "com"
+              ],
+              "path": [
+                "auth",
+                "realms",
+                "youwol",
+                "protocol",
+                "openid-connect",
+                "token"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "healthz",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{cdn-host}}/api/cdn-backend/healthz",
+              "host": [
+                "{{cdn-host}}"
+              ],
+              "path": [
+                "api",
+                "cdn-backend",
+                "healthz"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "clear namespace postman",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{cdn-host}}/api/cdn-backend/namespace/postman",
+              "host": [
+                "{{cdn-host}}"
+              ],
+              "path": [
+                "api",
+                "cdn-backend",
+                "namespace",
+                "postman"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "sanity checks",
+      "item": [
+        {
+          "name": "get libraries postman",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{cdn-host}}/api/cdn-backend/queries/libraries?namespace=postman",
+              "host": [
+                "{{cdn-host}}"
+              ],
+              "path": [
+                "api",
+                "cdn-backend",
+                "queries",
+                "libraries"
+              ],
+              "query": [
+                {
+                  "key": "namespace",
+                  "value": "postman"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get all libraries",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"0 library postman\", function () {",
+                  "    resp = pm.response.json()",
+                  "    pm.expect(resp.libraries.filter(l => l.namespace==\"postman\").length).to.equal(0)",
+                  "});",
+                  "",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{cdn-host}}/api/cdn-backend/queries/libraries",
+              "host": [
+                "{{cdn-host}}"
+              ],
+              "path": [
+                "api",
+                "cdn-backend",
+                "queries",
+                "libraries"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ensure rxjs&lodash&reflect&tslib&bootstrap",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"required libs\", function () {",
+                  "    resp = pm.response.json()",
+                  "    all_here = [\"rxjs\",\"lodash\",\"reflect-metadata\",\"tslib\", \"bootstrap\"]",
+                  "    .map( name => resp.libraries.find( lib => lib.name==name) != undefined )",
+                  "    .reduce( (acc,e) => acc && e, true)",
+                  "",
+                  "    pm.expect(all_here).to.equal(true)",
+                  "});",
+                  "",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{cdn-host}}/api/cdn-backend/queries/libraries?namespace=",
+              "host": [
+                "{{cdn-host}}"
+              ],
+              "path": [
+                "api",
+                "cdn-backend",
+                "queries",
+                "libraries"
+              ],
+              "query": [
+                {
+                  "key": "namespace",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "happy path",
+      "item": [
+        {
+          "name": "upload test data",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"199 files 43 libraries\", function () {",
+                  "    resp = pm.response.json()",
+                  "    pm.expect(resp.filesCount).to.equal(16)",
+                  "    pm.expect(resp.librariesCount).to.equal(6)",
+                  "    pm.expect(resp.namespaces).to.deep.equal([\"postman\"])",
+                  "});",
+                  "",
+                  "",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "services/cdn-backend/tests/test-data/cdn.zip"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{cdn-host}}/api/cdn-backend/actions/sync",
+              "host": [
+                "{{cdn-host}}"
+              ],
+              "path": [
+                "api",
+                "cdn-backend",
+                "actions",
+                "sync"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get libraries",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"3 libraries\", function () {",
+                  "    resp = pm.response.json()",
+                  "    pm.expect(resp.libraries.length).to.equal(3)",
+                  "});",
+                  "",
+                  "pm.test(\"@youwol/flux-lib-core\", function () {",
+                  "    resp = pm.response.json()",
+                  "    target = [\"0.0.0\", \"0.0.1\", \"0.0.2\"]",
+                  "    pm.expect(resp.libraries[0].name).to.equal(\"@postman/flux-core\")",
+                  "    pm.expect(resp.libraries[0].versions).to.deep.equal(target)",
+                  "    pm.expect(resp.libraries[0].namespace).to.equal(\"postman\")",
+                  "    pm.expect(resp.libraries[0]).to.have.property('id')",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{cdn-host}}/api/cdn-backend/queries/libraries?namespace=postman",
+              "host": [
+                "{{cdn-host}}"
+              ],
+              "path": [
+                "api",
+                "cdn-backend",
+                "queries",
+                "libraries"
+              ],
+              "query": [
+                {
+                  "key": "namespace",
+                  "value": "postman"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "loading graph",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"loading graph\", function () {",
+                  "    resp = pm.response.json()",
+                  "    pm.expect(resp.graphType).to.equal(\"sequential-v1\")",
+                  "    pm.expect(resp.definition.length).to.equal(3)",
+                  "    pm.expect(resp.lock.length).to.equal(7)",
+                  "    pm.expect(resp.definition.map(d=>d.length)).to.deep.equal([5,1,1])",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n\t\"libraries\": {\n        \"@postman/flux-core\": \"0.0.1\",\n        \"reflect-metadata\": \"0.1.13\",\n        \"rxjs\": \"6.5.5\",\n        \"@postman/utils\": \"0.0.0\",\n        \"@postman/flux-dataframe\": \"0.0.1\",\n        \"tslib\": \"1.10.0\",\n        \"lodash\": \"4.17.15\"\n    }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{cdn-host}}/api/cdn-backend/queries/loading-graph",
+              "host": [
+                "{{cdn-host}}"
+              ],
+              "path": [
+                "api",
+                "cdn-backend",
+                "queries",
+                "loading-graph"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "loading graph missing flux-core",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"loading graph include flux-core#0.0.1\", function () {",
+                  "    resp = pm.response.json()",
+                  "    pm.expect(resp.graphType).to.equal(\"sequential-v1\")",
+                  "    pm.expect(resp.definition.length).to.equal(3)",
+                  "    pm.expect(resp.lock.length).to.equal(7)",
+                  "    pm.expect(resp.lock.find( p => p.name==\"@postman/flux-core\").version).to.eq(\"0.0.1\")",
+                  "    pm.expect(resp.definition.map(d=>d.length)).to.deep.equal([5,1,1])",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n\t\"libraries\": {\n        \"reflect-metadata\": \"0.1.13\",\n        \"rxjs\": \"6.5.5\",\n        \"@postman/utils\": \"0.0.0\",\n        \"@postman/flux-dataframe\": \"0.0.1\",\n        \"tslib\": \"1.10.0\",\n        \"lodash\": \"4.17.15\"\n    },\n    \"using\":{\n        \"@postman/flux-core\" : \"0.0.1\"\n    }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{cdn-host}}/api/cdn-backend/queries/loading-graph",
+              "host": [
+                "{{cdn-host}}"
+              ],
+              "path": [
+                "api",
+                "cdn-backend",
+                "queries",
+                "loading-graph"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "loading graph using flux-core#0.0.0",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"loading graph include flux-core#0.0.0\", function () {",
+                  "    resp = pm.response.json()",
+                  "    pm.expect(resp.graphType).to.equal(\"sequential-v1\")",
+                  "    pm.expect(resp.definition.length).to.equal(3)",
+                  "    pm.expect(resp.lock.length).to.equal(7)",
+                  "    pm.expect(resp.lock.find( p => p.name==\"@postman/flux-core\").version).to.eq(\"0.0.0\")",
+                  "    pm.expect(resp.definition.map(d=>d.length)).to.deep.equal([5,1,1])",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n\t\"libraries\": {\n        \"reflect-metadata\": \"0.1.13\",\n        \"rxjs\": \"6.5.5\",\n        \"@postman/utils\": \"0.0.0\",\n        \"@postman/flux-dataframe\": \"0.0.1\",\n        \"tslib\": \"1.10.0\",\n        \"lodash\": \"4.17.15\"\n    },\n    \"using\":{\n        \"@postman/flux-core\":\"0.0.0\"\n    }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{cdn-host}}/api/cdn-backend/queries/loading-graph",
+              "host": [
+                "{{cdn-host}}"
+              ],
+              "path": [
+                "api",
+                "cdn-backend",
+                "queries",
+                "loading-graph"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "loading graph with #latest",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"loading graph include flux-core#0.0.0\", function () {",
+                  "    resp = pm.response.json()",
+                  "    pm.expect(resp.graphType).to.equal(\"sequential-v1\")",
+                  "    pm.expect(resp.definition.length).to.equal(3)",
+                  "    pm.expect(resp.lock.length).to.equal(7)",
+                  "    pm.expect(resp.lock.find( p => p.name==\"@postman/flux-core\").version).to.eq(\"0.0.0\")",
+                  "    pm.expect(resp.definition.map(d=>d.length)).to.deep.equal([5,1,1])",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n\t\"libraries\": {\n        \"reflect-metadata\": \"0.1.13\",\n        \"rxjs\": \"6.5.5\",\n        \"@postman/utils\": \"0.0.0\",\n        \"@postman/flux-dataframe\": \"latest\",\n        \"tslib\": \"1.10.0\",\n        \"lodash\": \"4.17.15\"\n    },\n    \"using\":{\n        \"@postman/flux-core\":\"0.0.0\"\n    }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{cdn-host}}/api/cdn-backend/queries/loading-graph",
+              "host": [
+                "{{cdn-host}}"
+              ],
+              "path": [
+                "api",
+                "cdn-backend",
+                "queries",
+                "loading-graph"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get versions flux-core",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"2 versions: 0.0.0 & 0.0.1 & 0.0.2\", function () {",
+                  "    resp = pm.response.json()",
+                  "    pm.expect(resp.name).to.equal(\"@postman/flux-core\")",
+                  "    pm.expect(resp.versions.length).to.equal(3)",
+                  "    pm.expect(resp.versions.includes(\"0.0.0\")).to.equal(true)",
+                  "    pm.expect(resp.versions.includes(\"0.0.1\")).to.equal(true)",
+                  "    pm.expect(resp.versions.includes(\"0.0.2\")).to.equal(true)",
+                  "    pm.expect(resp).to.have.property('id')",
+                  "    pm.collectionVariables.set(\"cdn-backend#flux-core-id\", resp.id)",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{cdn-host}}/api/cdn-backend/queries/library?name=@postman/flux-core",
+              "host": [
+                "{{cdn-host}}"
+              ],
+              "path": [
+                "api",
+                "cdn-backend",
+                "queries",
+                "library"
+              ],
+              "query": [
+                {
+                  "key": "name",
+                  "value": "@postman/flux-core"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "delete flux-core#0.0.0",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"deletedCount equal to 1\", function () {",
+                  "    resp = pm.response.json()",
+                  "    pm.expect(resp.deletedCount).to.equal(1)",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{cdn-host}}/api/cdn-backend/libraries/@postman/flux-core/0.0.0",
+              "host": [
+                "{{cdn-host}}"
+              ],
+              "path": [
+                "api",
+                "cdn-backend",
+                "libraries",
+                "@postman",
+                "flux-core",
+                "0.0.0"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get versions flux-core  from library id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"2 versions: 0.0.0 & 0.0.1\", function () {",
+                  "    resp = pm.response.json()",
+                  "    pm.expect(resp.name).to.equal(\"@postman/flux-core\")",
+                  "    pm.expect(resp.versions.length).to.equal(2)",
+                  "    pm.expect(resp.versions.includes(\"0.0.0\")).to.equal(false)",
+                  "    pm.expect(resp.versions.includes(\"0.0.1\")).to.equal(true)",
+                  "    pm.expect(resp.versions.includes(\"0.0.2\")).to.equal(true)",
+                  "    pm.expect(resp).to.have.property('id')",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n\t\"name\":\"@postman/flux-lib-core\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{cdn-host}}/api/cdn-backend/libraries/{{cdn-backend#flux-core-id}}",
+              "host": [
+                "{{cdn-host}}"
+              ],
+              "path": [
+                "api",
+                "cdn-backend",
+                "libraries",
+                "{{cdn-backend#flux-core-id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get flux-core#0.0.1 bundle",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n\t\"libraries\": [\"@youwol/flux-pack-geology-views\"]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{cdn-host}}/api/cdn-backend/resources/QHBvc3RtYW4vZmx1eC1jb3Jl/0.0.1/bundles/postman-flux-core.umd.js",
+              "host": [
+                "{{cdn-host}}"
+              ],
+              "path": [
+                "api",
+                "cdn-backend",
+                "resources",
+                "QHBvc3RtYW4vZmx1eC1jb3Jl",
+                "0.0.1",
+                "bundles",
+                "postman-flux-core.umd.js"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get flux-core#0.0.0 bundle",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n\t\"libraries\": [\"@youwol/flux-pack-geology-views\"]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{cdn-host}}/api/cdn-backend/resources/QHBvc3RtYW4vZmx1eC1jb3Jl/0.0.0/bundles/postman-flux-core.umd.js",
+              "host": [
+                "{{cdn-host}}"
+              ],
+              "path": [
+                "api",
+                "cdn-backend",
+                "resources",
+                "QHBvc3RtYW4vZmx1eC1jb3Jl",
+                "0.0.0",
+                "bundles",
+                "postman-flux-core.umd.js"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get flux-dataframe",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"recover 'this is a test for content'\", function () {",
+                  "    resp = pm.response.text()",
+                  "    pm.expect(resp.includes('this is a test for content')).to.equal(true)",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n\t\"libraries\": [\"@youwol/flux-pack-geology-views\"]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{cdn-host}}/api/cdn-backend/resources/{{urlPackDataframe}}",
+              "host": [
+                "{{cdn-host}}"
+              ],
+              "path": [
+                "api",
+                "cdn-backend",
+                "resources",
+                "{{urlPackDataframe}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get flux-dataframe latest",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"recover 'this is a test for content'\", function () {",
+                  "    resp = pm.response.text()",
+                  "    pm.expect(resp.includes('this is a test for content')).to.equal(true)",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n\t\"libraries\": [\"@youwol/flux-pack-geology-views\"]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{cdn-host}}/api/cdn-backend/resources/QHBvc3RtYW4vZmx1eC1kYXRhZnJhbWU=/latest/bundles/flux-dataframe.umd.js",
+              "host": [
+                "{{cdn-host}}"
+              ],
+              "path": [
+                "api",
+                "cdn-backend",
+                "resources",
+                "QHBvc3RtYW4vZmx1eC1kYXRhZnJhbWU=",
+                "latest",
+                "bundles",
+                "flux-dataframe.umd.js"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "post flux-machine-learning",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"@postman/flux-machine-learning upload response\", function () {",
+                  "    resp = pm.response.json()",
+                  "    pm.expect(resp.name).to.equal(\"@postman/flux-machine-learning\")",
+                  "    pm.expect(resp.version).to.equal(\"0.0.0\")",
+                  "    pm.expect(resp.fingerprint).to.equal(\"29028aeddc2f47345d1d9143dc9d4107\")",
+                  "    pm.expect(resp).to.have.property(\"id\")",
+                  "    pm.expect(resp.id).to.equal(\"QHBvc3RtYW4vZmx1eC1tYWNoaW5lLWxlYXJuaW5n\")",
+                  "    pm.expect(resp).to.have.property(\"url\")",
+                  "    pm.expect(resp.url).to.equal(\"QHBvc3RtYW4vZmx1eC1tYWNoaW5lLWxlYXJuaW5n/0.0.0/flux-machine-learning.umd.js\")",
+                  "    pm.collectionVariables.set(\"urlPackMachineLearning\",resp.url)",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "services/cdn-backend/tests/test-data/flux-machine-learning.zip"
+                }
+              ],
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{cdn-host}}/api/cdn-backend/actions/publish-library",
+              "host": [
+                "{{cdn-host}}"
+              ],
+              "path": [
+                "api",
+                "cdn-backend",
+                "actions",
+                "publish-library"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get versions flux-machine-learning",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"1 version: 0.0.1-next\", function () {",
+                  "    resp = pm.response.json()",
+                  "    pm.expect(resp.name).to.equal(\"@postman/flux-machine-learning\")",
+                  "    pm.expect(resp.versions.length).to.equal(1)",
+                  "    pm.expect(resp.versions.includes(\"0.0.0\")).to.equal(true)",
+                  "    pm.expect(resp).to.have.property('id')",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n\t\"name\":\"@youwol/flux-pack-machine-learning\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{cdn-host}}/api/cdn-backend/queries/library?name=@postman/flux-machine-learning",
+              "host": [
+                "{{cdn-host}}"
+              ],
+              "path": [
+                "api",
+                "cdn-backend",
+                "queries",
+                "library"
+              ],
+              "query": [
+                {
+                  "key": "name",
+                  "value": "@postman/flux-machine-learning"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get zip package",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n\t\"libraries\": [\"@youwol/flux-pack-geology-views\"]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{cdn-host}}/api/cdn-backend/libraries/@postman/flux-machine-learning/0.0.0",
+              "host": [
+                "{{cdn-host}}"
+              ],
+              "path": [
+                "api",
+                "cdn-backend",
+                "libraries",
+                "@postman",
+                "flux-machine-learning",
+                "0.0.0"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "loading graph  for machine learning pack",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n\t\"libraries\": {\"@postman/flux-machine-learning\": \"latest\"},\n    \"using\": {\"@postman/flux-core\":\"0.0.1\"}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{cdn-host}}/api/cdn-backend/queries/loading-graph",
+              "host": [
+                "{{cdn-host}}"
+              ],
+              "path": [
+                "api",
+                "cdn-backend",
+                "queries",
+                "loading-graph"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get flux-machine-learning",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"recover 'This is a test for content of flux-machine-learning' \", function () {",
+                  "    resp = pm.response.text()",
+                  "    pm.expect(resp.includes('This is a test for content of flux-machine-learning')).to.equal(true)",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n\t\"libraries\": [\"@youwol/flux-pack-geology-views\"]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{cdn-host}}/api/cdn-backend/resources/{{urlPackMachineLearning}}",
+              "host": [
+                "{{cdn-host}}"
+              ],
+              "path": [
+                "api",
+                "cdn-backend",
+                "resources",
+                "{{urlPackMachineLearning}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "errors",
+      "item": [
+        {
+          "name": "loading graph direct missing package latest",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test(\"include required info\", function () {",
+                  "    resp = pm.response.json()",
+                  "    pm.expect(resp.type).to.equal(\"PackagesNotFound\")",
+                  "    pm.expect(resp.parameters.packages).to.deep.equal([\"@postman/unknown#latest\"])",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n\t\"libraries\": {\n        \"@postman/unknown\": \"latest\"\n    }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{cdn-host}}/api/cdn-backend/queries/loading-graph",
+              "host": [
+                "{{cdn-host}}"
+              ],
+              "path": [
+                "api",
+                "cdn-backend",
+                "queries",
+                "loading-graph"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "loading graph direct missing package version 0",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test(\"include required info\", function () {",
+                  "    resp = pm.response.json()",
+                  "    pm.expect(resp.type).to.equal(\"PackagesNotFound\")",
+                  "    pm.expect(resp.parameters.packages).to.deep.equal([\"@postman/flux-core#0.0.10\"])",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n\t\"libraries\": {\n        \"@postman/flux-core\": \"0.0.10\"\n    }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{cdn-host}}/api/cdn-backend/queries/loading-graph",
+              "host": [
+                "{{cdn-host}}"
+              ],
+              "path": [
+                "api",
+                "cdn-backend",
+                "queries",
+                "loading-graph"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "loading graph direct missing package version 1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test(\"include required info\", function () {",
+                  "    resp = pm.response.json()",
+                  "    pm.expect(resp.type).to.equal(\"PackagesNotFound\")",
+                  "    pm.expect(resp.parameters.packages).to.deep.equal([\"@postman/unknown#0.0.10\"])",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n\t\"libraries\": {\n        \"@postman/unknown\": \"0.0.10\"\n    }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{cdn-host}}/api/cdn-backend/queries/loading-graph",
+              "host": [
+                "{{cdn-host}}"
+              ],
+              "path": [
+                "api",
+                "cdn-backend",
+                "queries",
+                "loading-graph"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "loading graph indirect missing package version with using",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test(\"include required info\", function () {",
+                  "    resp = pm.response.json()",
+                  "    pm.expect(resp.type).to.equal(\"PackagesNotFound\")",
+                  "    pm.expect(resp.parameters.packages).to.deep.equal([\"reflect-metadata#100.0.0\"])",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n\t\"libraries\": {\n        \"@postman/flux-core\": \"0.0.1\"\n    },\n    \"using\": {\n        \"reflect-metadata\": \"100.0.0\"\n    }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{cdn-host}}/api/cdn-backend/queries/loading-graph",
+              "host": [
+                "{{cdn-host}}"
+              ],
+              "path": [
+                "api",
+                "cdn-backend",
+                "queries",
+                "loading-graph"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "loading graph indirect missing package version",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test(\"include required info\", function () {",
+                  "    resp = pm.response.json()",
+                  "    pm.expect(resp.type).to.equal(\"PackagesNotFound\")",
+                  "    pm.expect(resp.parameters.packages).to.deep.equal([\"unknown#latest\"])",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "type": "text",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n\t\"libraries\": {\n        \"@postman/flux-core\": \"0.0.2\"\n    }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{cdn-host}}/api/cdn-backend/queries/loading-graph",
+              "host": [
+                "{{cdn-host}}"
+              ],
+              "path": [
+                "api",
+                "cdn-backend",
+                "queries",
+                "loading-graph"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "clear namespace postman",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              ""
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "type": "text",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{cdn-host}}/api/cdn-backend/namespace/postman",
+          "host": [
+            "{{cdn-host}}"
+          ],
+          "path": [
+            "api",
+            "cdn-backend",
+            "namespace",
+            "postman"
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "token",
+      "value": "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJHa2RyeWwwV29KUnRrOWpuMndReVhDRDVicWxsRkNmdUxmMTRGT041SUw0In0.eyJleHAiOjE2MjM0MzIzMTUsImlhdCI6MTYyMzM0NTkxNSwianRpIjoiYjdjZDhmZjEtZWM4Mi00MzNkLTg1ZGYtZTRhZjQ0ZjhhNGRiIiwiaXNzIjoiaHR0cHM6Ly9hdXRoLnlvdXdvbC5jb20vYXV0aC9yZWFsbXMveW91d29sIiwiYXVkIjoieW91d29sLWRldiIsInN1YiI6ImMyMDI2YzRmLWY3ZjItNGRhNi04MDBmLWE4MmU2NDAxODdmNyIsInR5cCI6IkJlYXJlciIsImF6cCI6InlvdXdvbC1kZXYiLCJhY3IiOiIxIiwic2NvcGUiOiJwcm9maWxlIGVtYWlsIHlvdXdvbF9kZXYgeW91d29sX3VzZXIiLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsImNsaWVudElkIjoieW91d29sLWRldiIsImNsaWVudEhvc3QiOiIxMC4xLjUxLjE0MyIsIm1lbWJlcm9mIjpbIi95b3V3b2wtdXNlcnMiXSwicHJlZmVycmVkX3VzZXJuYW1lIjoic2VydmljZS1hY2NvdW50LXlvdXdvbC1kZXYiLCJjbGllbnRBZGRyZXNzIjoiMTAuMS41MS4xNDMifQ.kcn0HUEmXR3fbjIZesZxSvrjZsbSiUjjJaHlmnpjnGSa7IYCHrZ672KJ-S2nujjT5RS6x_8sgBgjKEFwhM0g1IYGODdyUWc5aDHK8tJc4WavatGg0cNNfM18-hjsmGIQ9g1vocBPXgS06ckIjJK_lHQO77V5EbpETro5GzJAvTNXIJEFyjp8DFJCkDbnYdC5YOb3fybZ9BWhKbMl1UoRFvwMmpkgIZBfZbMdEgDMq5DblIxy1bIDTpI9QPGD8lw_--WFFe0zOn_uGxrN_jLbxzQwtDSSzhoZ-GVcICT6VlGfOxCgjDFLxinaisumF0l8qBUvjy8lJr2-MUz2yu5e6A"
+    },
+    {
+      "key": "urlPackDataframe",
+      "value": "QHBvc3RtYW4vZmx1eC1kYXRhZnJhbWU=/0.0.1/bundles/flux-dataframe.umd.js"
+    },
+    {
+      "key": "cdn-backend#flux-core-id",
+      "value": "QHBvc3RtYW4vZmx1eC1jb3Jl"
+    },
+    {
+      "key": "urlPackMachineLearning",
+      "value": "QHBvc3RtYW4vZmx1eC1tYWNoaW5lLWxlYXJuaW5n/0.0.0/flux-machine-learning.umd.js"
+    }
+  ]
+}

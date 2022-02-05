@@ -1,0 +1,4 @@
+src/.virtualenv
+src/tmp_zips
+.idea
+.coverage
