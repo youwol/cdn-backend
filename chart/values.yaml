@@ -5,12 +5,12 @@
 replicaCount: 1
 
 image:
-  repository: io.youwol.com/platform/cdn-backend
+  repository: registry.gitlab.com/youwol/platform/cdn-backend
   tag: latest
   pullPolicy: Always
 
 imagePullSecrets:
-  - name: youwol-docker
+  - name: gitlab-docker
 
 nameOverride: ""
 fullnameOverride: "cdn-backend"
@@ -52,7 +52,7 @@ ingress:
     kubernetes.io/ingress.class: kong
     konghq.com/plugins: oidc-dev
   hosts:
-    - host: cdn.youwol.com
+    - host: gc.platform.youwol.com
       paths: [ "/api/cdn-backend" ]
   tls: [ ]
   #  - secretName: chart-example-tls
@@ -85,7 +85,7 @@ tolerations: [ ]
 affinity: { }
 
 keycloak:
-  host: auth.youwol.com
+  host: gc.auth.youwol.com
 
 mappings:
   enabled: false
