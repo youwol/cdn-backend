@@ -7,7 +7,6 @@ import os
 import time
 import zipfile
 from pathlib import Path
-from shutil import which
 from typing import IO
 from typing import Union, List, Mapping
 from uuid import uuid4
@@ -16,7 +15,7 @@ import brotli
 from fastapi import HTTPException
 from starlette.responses import Response
 
-from youwol_utils import generate_headers_downstream, QueryBody, files_check_sum, shutil, log_info, log_error
+from youwol_utils import generate_headers_downstream, QueryBody, files_check_sum, shutil, log_info
 from youwol_utils.clients.docdb.models import Query, WhereClause, OrderingClause
 from .configurations import Configuration
 from .models import FormData, PublishResponse
@@ -96,28 +95,14 @@ def loading_graph(downloaded, deque, items_dict):
 
 async def format_download_form(file_path: Path, base_path: Path, dir_path: Path, compress: bool, rename: str = None) \
         -> FormData:
+
     if compress and get_content_encoding(file_path) == "br":
         path_log = "/".join(file_path.parts[2:])
+        log_info(f'brotlify (python) {path_log}')
         start = time.time()
-        if which('brotli'):
-            log_info(f'brotlify (system) {path_log} ...')
-            p = await asyncio.create_subprocess_shell(
-                cmd=f'brotli {str(file_path)}',
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-                shell=True)
-
-            async for f in p.stderr:
-                log_error(f.decode('utf-8'))
-            await p.communicate()
-            os.system(f'rm {str(file_path)}')
-            os.system(f'mv {str(file_path)}.br {str(file_path)}')
-        else:
-            log_info(f'brotlify (python) {path_log}')
-            start = time.time()
-            compressed = brotli.compress(file_path.read_bytes())
-            with file_path.open("wb") as f:
-                f.write(compressed)
+        compressed = brotli.compress(file_path.read_bytes())
+        with file_path.open("wb") as f:
+            f.write(compressed)
         log_info(f'...{path_log} => {time.time() - start} s')
 
     data = open(str(file_path), 'rb').read()
