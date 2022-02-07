@@ -358,17 +358,6 @@ async def resolve_loading_tree(
             await ctx.info(text="Start another loop to fetch missing dependencies",
                            data={"missing": missing, "retrieved": list(dependencies_dict.keys())})
 
-            if missing_previous_loop and missing == missing_previous_loop:
-                await ctx.error(
-                    text="Dependencies resolution stuck",
-                    data={"resolvedDependencies": dependencies_dict,
-                          "missing": missing},
-                )
-                raise CyclicDependencies(
-                    context="Dependencies resolution stuck",
-                    packages=missing
-                )
-
             def get_dependency(dependency):
                 if dependency in body.using:
                     return get_query_version(configuration.doc_db, dependency, body.using[dependency], ctx.headers())
