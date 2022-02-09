@@ -1,5 +1,5 @@
 python-multipart==0.0.5
-brotlipy==0.7.0
+Brotli==1.0.9
 fastapi==0.71.0
 uvicorn==0.16.0
 aiohttp==3.8.1
