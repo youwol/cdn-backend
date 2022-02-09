@@ -1,7 +1,7 @@
 from youwol.environment.models import IPipelineFactory
 from youwol.environment.youwol_environment import YouwolEnvironment
-from youwol.pipelines.docker_k8s_helm import InstallHelmStepConfig, PublishDockerStepConfig, get_helm_app_version
-from youwol.pipelines.pipeline_fastapi_youwol_backend import pipeline, PipelineConfig, DocStepConfiguration
+from youwol.pipelines.docker_k8s_helm import InstallHelmStepConfig, get_helm_app_version, PublishDockerStepConfig
+from youwol.pipelines.pipeline_fastapi_youwol_backend import pipeline, PipelineConfig, DocStepConfig
 from youwol_utils.context import Context
 
 
@@ -25,7 +25,7 @@ class PipelineFactory(IPipelineFactory):
                     dockerRepo=docker_repo,
                     imageVersion=lambda project, _ctx: get_helm_app_version(project.path)
                 ),
-                docConfig=DocStepConfiguration(),
+                docConfig=DocStepConfig(),
                 helmConfig=InstallHelmStepConfig(
                     namespace="prod",
                     secrets=[env.k8sInstance.openIdConnect.authSecret, docker_repo.pullSecret],
@@ -38,6 +38,6 @@ class PipelineFactory(IPipelineFactory):
                     })
             )
             await ctx.info(text='Pipeline config', data=config)
-            result = pipeline(config, ctx)
+            result = await pipeline(config, ctx)
             await ctx.info(text='Pipeline', data=result)
             return result
