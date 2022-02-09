@@ -12,6 +12,7 @@ from youwol_utils.clients.docdb.docdb import DocDbClient as DocDb
 from youwol_utils.clients.docdb.local_docdb import LocalDocDbClient as LocalDocDb
 from youwol_utils.clients.storage.local_storage import LocalStorageClient as LocalStorage
 from youwol_utils.clients.storage.storage import StorageClient as Storage
+from youwol_utils.context import ContextLogger, DeployedContextLogger
 
 
 @dataclass(frozen=True)
@@ -29,6 +30,7 @@ class Configuration:
     namespace: str = "cdn"
     replication_factor: int = 2
     owner: str = "/youwol-users"
+    ctx_logger: ContextLogger = DeployedContextLogger()
 
 
 async def get_tricot_config() -> Configuration:
