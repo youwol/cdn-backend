@@ -213,8 +213,10 @@ async def delete_library(
 
 
 @router.delete("/libraries", summary="delete a library")
-async def delete_libraries(request: Request, body: DeleteBody):
-    responses = await asyncio.gather(*[delete_library(request=request, library_id=to_package_id(name))
+async def delete_libraries(request: Request, body: DeleteBody,
+                           configuration: Configuration = Depends(get_configuration)):
+    responses = await asyncio.gather(*[delete_library(request=request, library_id=to_package_id(name),
+                                                      configuration=configuration)
                                        for name in body.librariesName])
     return {"deletedCount": functools.reduce(lambda acc, e: acc + e['deletedCount'], responses, 0)}
 
@@ -307,7 +309,7 @@ async def resolve_loading_tree(
                 text=f"While resolving latest version: some packages are not found in the CDN ",
                 data={"missingPackages": packages_error})
             raise PackagesNotFound(
-                context="Failed to retrieved latest version of package(s)",
+                context="Failed to retrieve the latest version of package(s)",
                 packages=packages_error)
 
         latest_versions = {name: resp.versions[0] for name, resp in zip(latest_queries, versions_resp)}
