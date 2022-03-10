@@ -32,6 +32,8 @@ class Configuration:
     owner: str = "/youwol-users"
     ctx_logger: ContextLogger = DeployedContextLogger()
 
+    allowed_prerelease = ['wip', 'alpha', 'alpha-wip', 'beta', 'beta-wip']
+
 
 async def get_tricot_config() -> Configuration:
     required_env_vars = ["AUTH_HOST", "AUTH_CLIENT_ID", "AUTH_CLIENT_SECRET", "AUTH_CLIENT_SCOPE"]
