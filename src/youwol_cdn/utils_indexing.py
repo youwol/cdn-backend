@@ -7,7 +7,7 @@ from typing import Dict, Union, Any
 
 from fastapi import HTTPException
 import semantic_version
-from youwol_cdn.configurations import Configuration
+from .configurations import Configuration
 
 skipped_dependencies = []
 flatten = itertools.chain.from_iterable
