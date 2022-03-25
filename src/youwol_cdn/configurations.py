@@ -1,7 +1,10 @@
 import os
 import sys
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Union, Any, Coroutine, Dict
+
+import requests
 
 from youwol_cdn.models import LIBRARIES_TABLE
 from youwol_utils import (
@@ -93,11 +96,14 @@ async def get_remote_clients_gc_config() -> Configuration:
 
 
 async def get_full_local_config() -> Configuration:
-    platform_path = find_platform_path()
-    storage = LocalStorage(root_path=platform_path.parent / 'drive-shared' / 'storage',
+
+    resp = requests.get(f"http://localhost:{sys.argv[2]}/admin/environment/status").json()
+    database_path = Path(resp['configuration']['pathsBook']['databases'])
+
+    storage = LocalStorage(root_path=database_path / 'storage',
                            bucket_name=Configuration.namespace)
 
-    doc_db = LocalDocDb(root_path=platform_path.parent / 'drive-shared' / 'docdb',
+    doc_db = LocalDocDb(root_path=database_path / 'docdb',
                         keyspace_name=Configuration.namespace,
                         table_body=LIBRARIES_TABLE)
 
