@@ -4,7 +4,6 @@ import hashlib
 import itertools
 import json
 import os
-import time
 import zipfile
 from pathlib import Path
 from typing import IO, Optional, Iterable, Dict
@@ -99,37 +98,34 @@ def loading_graph(downloaded, deque, items_dict):
 async def prepare_files_to_post(base_path: Path, package_path: Path, zip_path: Path, paths: List[Path],
                                 need_compression, context: Context):
     async with context.start(action=f"Preparation of {len(paths) + 1} files to download in minio",
-                             with_labels=["filesPreparation"]) as ctx:
-        form_original = await format_download_form(zip_path, base_path, package_path.parent, need_compression,
-                                                   '__original.zip', ctx)
-        forms = await asyncio.gather(*[
-            format_download_form(path, base_path, package_path.parent, need_compression, None, ctx)
+                             with_labels=["filesPreparation"]):
+        form_original = format_download_form(zip_path, base_path, package_path.parent, need_compression,
+                                             '__original.zip')
+        forms = [
+            format_download_form(path, base_path, package_path.parent, need_compression, None)
             for path in paths
-        ])
+        ]
+        await context.info(
+            "Forms data prepared",
+            data={"forms": [{"name": str(f.objectName), "size": f.objectSize, "encoding": f.content_encoding}
+                            for f in forms]})
         return list(forms) + [form_original]
 
 
-async def format_download_form(file_path: Path, base_path: Path, dir_path: Path, compress: bool, rename: Optional[str],
-                               context: Context) \
+def format_download_form(file_path: Path, base_path: Path, dir_path: Path, compress: bool, rename: Optional[str]) \
         -> FormData:
-    path_log = "/".join(file_path.parts[2:])
-    async with context.start(action=f"Prepare file '{path_log}' {'' if not rename else '(renamed :' + rename + ')'}",
-                             with_labels=["download"]) as ctx:
-        if compress and get_content_encoding(file_path) == "br":
-            await ctx.info(text="Apply brotli compression")
-            start = time.time()
-            compressed = brotli.compress(file_path.read_bytes())
-            with file_path.open("wb") as f:
-                f.write(compressed)
-            await ctx.info(text=f"Brotli done on {path_log}: md5 is '{md5_from_file(file_path)}', " +
-                                f"took {time.time() - start}s")
 
-        data = open(str(file_path), 'rb').read()
-        path_bucket = base_path / file_path.relative_to(dir_path) if not rename else base_path / rename
+    if compress and get_content_encoding(file_path) == "br":
+        compressed = brotli.compress(file_path.read_bytes())
+        with file_path.open("wb") as f:
+            f.write(compressed)
 
-        return FormData(objectName=path_bucket, objectData=data, owner=Configuration.owner,
-                        objectSize=len(data), content_type=get_content_type(file_path.name),
-                        content_encoding=get_content_encoding(file_path.name))
+    data = open(str(file_path), 'rb').read()
+    path_bucket = base_path / file_path.relative_to(dir_path) if not rename else base_path / rename
+
+    return FormData(objectName=path_bucket, objectData=data, owner=Configuration.owner,
+                    objectSize=len(data), content_type=get_content_type(file_path.name),
+                    content_encoding=get_content_encoding(file_path.name))
 
 
 def extract_zip_file(file: IO, zip_path: Union[Path, str], dir_path: Union[Path, str], delete_original=True):
@@ -196,28 +192,29 @@ async def publish_package(file: IO, filename: str, content_encoding, configurati
         # the fingerprint in the md5 checksum of the included files after having eventually being compressed
         os.remove(zip_path)
         md5_stamp = md5_from_folder(dir_path)
+        await context.info(text=f"md5_stamp={md5_stamp}")
+
         post_requests = [storage.post_object(path=form.objectName, content=form.objectData,
                                              content_type=form.content_type, owner=Configuration.owner, headers=headers)
                          for form in forms]
 
-        await context.info(text=f"Clean minio directory {str(base_path)}")
-        await storage.delete_group(prefix=base_path, owner=Configuration.owner, headers=headers)
+        async with context.start(action="Upload data in storage"):
+            await context.info(text=f"Clean minio directory {str(base_path)}")
+            await storage.delete_group(prefix=base_path, owner=Configuration.owner, headers=headers)
+            await context.info(text=f"Send {len(post_requests)} files to storage")
+            await asyncio.gather(*post_requests)
 
-        await context.info(text=f"Send {len(post_requests)} files to storage")
-        await asyncio.gather(*post_requests)
-        record = format_doc_db_record(package_path=package_path, fingerprint=md5_stamp)
-
-        await context.info(text=f"Send record to docdb", data={"record": record})
-        await configuration.doc_db.create_document(record, owner=Configuration.owner, headers=headers)
-
-        await context.info(text=f"md5_stamp={md5_stamp}")
+        async with context.start(action="Create record in docdb"):
+            record = format_doc_db_record(package_path=package_path, fingerprint=md5_stamp)
+            await context.info(text=f"Send record to docdb", data={"record": record})
+            await configuration.doc_db.create_document(record, owner=Configuration.owner, headers=headers)
 
         await context.info(text=f"Create explorer data", data={"record": record})
         explorer_data = await create_explorer_data(root_path=base_path, forms=forms, context=context)
 
         def get_explorer_path(folder):
-            base = f"generated/explorer/{library_id}/{version}/"
-            return f"{base}/{folder}/items.json" if folder != '.' else f"{base}/items.json"
+            base = f"generated/explorer/{library_id}/{version}"
+            return f"{base}/{folder}/items.json" if folder and folder != '.' else f"{base}/items.json"
 
         await asyncio.gather(*[storage.post_json(path=get_explorer_path(folder), json=items.dict(),
                                                  owner=Configuration.owner, headers=headers)
