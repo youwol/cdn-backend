@@ -119,6 +119,24 @@ class LoadingGraphBody(BaseModel):
     using: Dict[str, str] = {}
 
 
+class FileResponse(BaseModel):
+    name: str
+    size: int
+    encoding: str
+
+
+class FolderResponse(BaseModel):
+    name: str
+    path: str
+    size: int
+
+
+class ExplorerResponse(BaseModel):
+    size: int
+    files: List[FileResponse]
+    folders: List[FolderResponse]
+
+
 LIBRARIES_TABLE = TableBody(
     name='libraries',
     version="1.0",

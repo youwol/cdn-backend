@@ -7,7 +7,7 @@ import os
 import time
 import zipfile
 from pathlib import Path
-from typing import IO, Optional
+from typing import IO, Optional, Iterable, Dict
 from typing import Union, List, Mapping
 from uuid import uuid4
 
@@ -21,7 +21,7 @@ from youwol_utils import generate_headers_downstream, QueryBody, files_check_sum
 from youwol_utils.clients.docdb.models import Query, WhereClause, OrderingClause
 from youwol_utils.context import Context
 from .configurations import Configuration
-from .models import FormData, PublishResponse
+from .models import FormData, PublishResponse, FileResponse, FolderResponse, ExplorerResponse
 from .utils_indexing import format_doc_db_record, get_version_number_str
 
 flatten = itertools.chain.from_iterable
@@ -196,7 +196,6 @@ async def publish_package(file: IO, filename: str, content_encoding, configurati
         # the fingerprint in the md5 checksum of the included files after having eventually being compressed
         os.remove(zip_path)
         md5_stamp = md5_from_folder(dir_path)
-
         post_requests = [storage.post_object(path=form.objectName, content=form.objectData,
                                              content_type=form.content_type, owner=Configuration.owner, headers=headers)
                          for form in forms]
@@ -213,11 +212,84 @@ async def publish_package(file: IO, filename: str, content_encoding, configurati
 
         await context.info(text=f"md5_stamp={md5_stamp}")
 
+        await context.info(text=f"Create explorer data", data={"record": record})
+        explorer_data = await create_explorer_data(root_path=base_path, forms=forms, context=context)
+
+        def get_explorer_path(folder):
+            base = f"generated/explorer/{library_id}/{version}/"
+            return f"{base}/{folder}/items.json" if folder != '.' else f"{base}/items.json"
+
+        await asyncio.gather(*[storage.post_json(path=get_explorer_path(folder), json=items.dict(),
+                                                 owner=Configuration.owner, headers=headers)
+                               for folder, items in explorer_data.items()])
+
         return PublishResponse(name=package_json["name"], version=version, compressedSize=compressed_size,
                                id=to_package_id(package_json["name"]), fingerprint=md5_stamp,
                                url=f"{to_package_id(package_json['name'])}/{record['version']}/{record['bundle']}")
     finally:
         shutil.rmtree(dir_path)
+
+
+async def create_explorer_data(root_path: Path, forms: List[FormData], context: Context) -> Dict[str, ExplorerResponse]:
+
+    def parent_dir(form: FormData):
+        p = form.objectName.relative_to(root_path)
+        return p.parent
+
+    def folders_children(parent: Path, folders: Iterable[Path]):
+        children = []
+        for folder in folders:
+            try:
+                p = folder.relative_to(parent)
+                child = parent / p.parts[0]
+                if len(p.parts) >= 1 and child not in children:
+                    children.append(child)
+            except (IndexError, ValueError):
+                pass
+        return children
+
+    def to_file_data(form: FormData):
+        return FileResponse(name=Path(form.objectName).name, size=form.objectSize, encoding=form.content_encoding)
+
+    def to_folder_data(path: Path):
+        return FolderResponse(name=path.name, path=str(path), size=-1)
+
+    def compute_folders_size_rec(content: ExplorerResponse, all_data, result):
+
+        size_files = sum([file.size for file in content.files])
+        size_folders = [compute_folders_size_rec(all_data[folder.path], all_data, result)
+                        for folder in content.folders]
+
+        for i, folder in enumerate(content.folders):
+            folder.size = size_folders[i]
+        content.size = size_files + sum(size_folders)
+        return content.size
+
+    async with context.start(action="create explorer data",
+                             with_attributes={"path": str(root_path)}
+                             ) as ctx:  # type: Context
+
+        forms.sort(key=lambda d: parent_dir(d))
+        grouped = itertools.groupby(forms, lambda d: parent_dir(d))
+        grouped = {k: list(v) for k, v in grouped}
+        non_empty_folders = grouped.keys()
+        data_folders = {str(parent): ExplorerResponse(
+            size=-1,
+            files=[to_file_data(f) for f in files],
+            folders=[to_folder_data(path) for path in folders_children(parent, non_empty_folders)]
+        ) for parent, files in grouped.items()}
+        empty_folders = [folder for v in data_folders.values() for folder in v.folders
+                         if not str(folder.path) in data_folders]
+        data_empty_folders = {str(k.path): ExplorerResponse(
+            size=-1,
+            files=[],
+            folders=[to_folder_data(path) for path in folders_children(Path(k.path), non_empty_folders)]
+        ) for k in empty_folders}
+        data = {**data_folders, ** data_empty_folders}
+        results = {}
+        compute_folders_size_rec(data['.'], data, results)
+        await ctx.info('folders tree re-constructed', data={k: f"{len(d.files)} file(s)" for k, d in data.items()})
+        return data
 
 
 def format_response(content: bytes, file_id: str, max_age: str = "31536000") -> Response:
