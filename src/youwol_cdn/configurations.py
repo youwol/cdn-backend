@@ -20,7 +20,7 @@ from youwol_utils.utils_paths import get_databases_path
 class Configuration:
     required_libs = ["tslib#1.10.0", "rxjs#6.5.5", "lodash#4.17.15", "reflect-metadata#0.1.13", "bootstrap#4.4.1"]
 
-    open_api_prefix: str
+    root_path: str
     http_port: int
     base_path: str
     storage: any
@@ -56,7 +56,7 @@ async def get_tricot_config() -> Configuration:
                    )
 
     return Configuration(
-        open_api_prefix='/api/cdn-backend',
+        root_path='/api/cdn-backend',
         http_port=8080,
         base_path="",
         storage=storage,
@@ -77,7 +77,7 @@ async def get_remote_clients_config(url_cluster) -> Configuration:
                    )
 
     return Configuration(
-        open_api_prefix='/api/cdn-backend',
+        root_path='/api/cdn-backend',
         http_port=2066,
         base_path="",
         storage=storage,
@@ -105,7 +105,7 @@ async def get_full_local_config() -> Configuration:
                         table_body=LIBRARIES_TABLE)
 
     return Configuration(
-        open_api_prefix='',
+        root_path='',
         http_port=2066,
         base_path="",
         storage=storage,

@@ -20,7 +20,7 @@ asyncio.get_event_loop().run_until_complete(init_resources(configuration))
 app = FastAPI(
     title="cdn-backend",
     description="CDN service of YouWol",
-    openapi_prefix=configuration.open_api_prefix)
+    root_path=configuration.root_path)
 
 
 @app.exception_handler(YouWolException)

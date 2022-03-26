@@ -32,8 +32,13 @@ router = APIRouter()
 
 
 @router.get("/healthz")
-async def healthz():
-    return {"status": "cdn-backend ok"}
+async def healthz(
+        configuration: Configuration = Depends(get_configuration)
+):
+    return {
+        "status": "cdn-backend ok",
+        "root_path": configuration.root_path
+    }
 
 
 @router.post("/actions/publish-library",
@@ -619,7 +624,7 @@ async def explorer(
         except Exception:
             raise HTTPException(status_code=400, detail=f"'{library_id}' is not a valid library id")
 
-        path = f"generated/explorer/{package_name.replace('@', '')}/{version}/{rest_of_path}"
+        path = f"generated/explorer/{package_name.replace('@', '')}/{version}/{rest_of_path}/".replace('//', '/')
         storage = configuration.storage
-        items = await storage.get_json(path + "/items.json", owner=configuration.owner, headers=ctx.headers())
+        items = await storage.get_json(path + "items.json", owner=configuration.owner, headers=ctx.headers())
         return ExplorerResponse(**items)
