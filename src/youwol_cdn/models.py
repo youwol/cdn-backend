@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, NamedTuple, Union, Dict, Tuple
+from typing import List, NamedTuple, Union, Dict, Any
 
 from pydantic import BaseModel
 
@@ -93,7 +93,7 @@ class Library(BaseModel):
 class LoadingGraphResponseV1(BaseModel):
     graphType: str
     lock: List[Library]
-    definition: List[List[Tuple[str, Url]]]
+    definition: List[List[Any]]  # 'Any' is actually Tuple[str, Url], but it leads to 500 when rendering the docs
 
 
 class DependenciesResponse(BaseModel):
