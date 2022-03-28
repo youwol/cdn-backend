@@ -3,7 +3,7 @@ import sys
 from dataclasses import dataclass
 from typing import Union, Any, Coroutine, Dict
 
-from youwol_cdn.models import LIBRARIES_TABLE
+from youwol_cdn_backend import Constants
 from youwol_utils import (
     find_platform_path, get_headers_auth_admin_from_env,
     get_headers_auth_admin_from_secrets_file, log_info,
@@ -13,27 +13,22 @@ from youwol_utils.clients.docdb.local_docdb import LocalDocDbClient as LocalDocD
 from youwol_utils.clients.storage.local_storage import LocalStorageClient as LocalStorage
 from youwol_utils.clients.storage.storage import StorageClient as Storage
 from youwol_utils.context import ContextLogger, DeployedContextLogger
+from youwol_utils.http_clients.cdn_backend import LIBRARIES_TABLE
 from youwol_utils.utils_paths import get_databases_path
 
 
 @dataclass(frozen=True)
 class Configuration:
-    required_libs = ["tslib#1.10.0", "rxjs#6.5.5", "lodash#4.17.15", "reflect-metadata#0.1.13", "bootstrap#4.4.1"]
 
     root_path: str
     http_port: int
     base_path: str
-    storage: any
-    doc_db: Union[DocDb, LocalDocDb]
-
+    storage: Union[Storage, LocalStorage, None]
+    doc_db: Union[DocDb, LocalDocDb, None]
     admin_headers: Union[Coroutine[Any, Any, Dict[str, str]], None]
 
-    namespace: str = "cdn"
     replication_factor: int = 2
-    owner: str = "/youwol-users"
     ctx_logger: ContextLogger = DeployedContextLogger()
-
-    allowed_prerelease = ['wip', 'alpha', 'alpha-wip', 'beta', 'beta-wip']
 
 
 async def get_tricot_config() -> Configuration:
@@ -46,11 +41,11 @@ async def get_tricot_config() -> Configuration:
     log_info("Use tricot configuration", openid_host=openid_host)
 
     storage = Storage(url_base="http://storage/api",
-                      bucket_name=Configuration.namespace
+                      bucket_name=Constants.namespace
                       )
 
     doc_db = DocDb(url_base="http://docdb/api",
-                   keyspace_name=Configuration.namespace,
+                   keyspace_name=Constants.namespace,
                    table_body=LIBRARIES_TABLE,
                    replication_factor=Configuration.replication_factor
                    )
@@ -68,10 +63,10 @@ async def get_tricot_config() -> Configuration:
 async def get_remote_clients_config(url_cluster) -> Configuration:
     openid_host = "gc.auth.youwol.com"
     storage = Storage(url_base=f"https://{url_cluster}/api/storage",
-                      bucket_name=Configuration.namespace
+                      bucket_name=Constants.namespace
                       )
     doc_db = DocDb(url_base=f"https://{url_cluster}/api/docdb",
-                   keyspace_name=Configuration.namespace,
+                   keyspace_name=Constants.namespace,
                    table_body=LIBRARIES_TABLE,
                    replication_factor=Configuration.replication_factor
                    )
@@ -98,10 +93,10 @@ async def get_full_local_config() -> Configuration:
     database_path = await get_databases_path(sys.argv[2])
 
     storage = LocalStorage(root_path=database_path / 'storage',
-                           bucket_name=Configuration.namespace)
+                           bucket_name=Constants.namespace)
 
     doc_db = LocalDocDb(root_path=database_path / 'docdb',
-                        keyspace_name=Configuration.namespace,
+                        keyspace_name=Constants.namespace,
                         table_body=LIBRARIES_TABLE)
 
     return Configuration(
@@ -117,8 +112,6 @@ async def get_full_local_config() -> Configuration:
 configurations = {
     'tricot': get_tricot_config,
     'remote-clients': get_remote_clients_gc_config,
-    # 'local':  get_local_config_dev,
-    # 'local-test':  get_local_config_test,
     'full-local': get_full_local_config,
 }
 
