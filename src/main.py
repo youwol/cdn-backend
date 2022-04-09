@@ -1,24 +1,38 @@
-import asyncio
-from configurations import get_configuration, Configuration
-from youwol_cdn_backend import init_resources, router, Dependencies
-from youwol_utils.servers.fast_api import serve, FastApiApp, FastApiRouter
+from youwol_cdn_backend import get_router
+from youwol_utils.servers.fast_api import serve, FastApiApp, FastApiRouter, AppConfiguration, \
+    select_configuration_from_command_line
 
 
-configuration: Configuration = asyncio.get_event_loop().run_until_complete(get_configuration())
-asyncio.get_event_loop().run_until_complete(init_resources(configuration))
+async def local() -> AppConfiguration:
+    from config_local import get_configuration as config
+    return await config()
 
-Dependencies.get_configuration = get_configuration
+
+async def hybrid() -> AppConfiguration:
+    from config_hybrid import get_configuration as config
+    return await config()
+
+
+async def prod() -> AppConfiguration:
+    from config_prod import get_configuration as config
+    return await config()
+
+
+app_config = select_configuration_from_command_line(
+    {
+        "local": local,
+        "hybrid": hybrid,
+        "prod": prod
+    }
+)
 
 serve(
     FastApiApp(
         title="cdn-backend",
-        description="CDN service of YouWol",
-        root_path=configuration.root_path,
-        base_path=configuration.base_path,
+        description="Content delivery network service & dependencies resolution",
+        server_options=app_config.server,
         root_router=FastApiRouter(
-            router=router
-        ),
-        ctx_logger=configuration.ctx_logger,
-        http_port=configuration.http_port
+            router=get_router(app_config.service)
+        )
     )
 )
