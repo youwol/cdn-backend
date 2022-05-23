@@ -5,7 +5,7 @@ from config_common import on_before_startup, cache_prefix
 from youwol_cdn_backend import Configuration, Constants
 
 from youwol_utils import StorageClient, DocDbClient, AuthClient, CacheClient
-from youwol_utils.context import DeployedContextLogger
+from youwol_utils.context import DeployedContextReporter
 from youwol_utils.http_clients.cdn_backend import LIBRARIES_TABLE
 from youwol_utils.middlewares import Middleware
 from youwol_utils.servers.fast_api import FastApiMiddleware, AppConfiguration, ServerOptions
@@ -57,7 +57,7 @@ async def get_configuration():
             )
         ],
         on_before_startup=_on_before_startup,
-        ctx_logger=DeployedContextLogger()
+        ctx_logger=DeployedContextReporter()
     )
     return AppConfiguration(
         server=server_options,
