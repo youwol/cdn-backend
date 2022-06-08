@@ -6,7 +6,8 @@ from config_common import on_before_startup, cache_prefix
 
 from youwol_cdn_backend import Configuration, Constants
 
-from youwol_utils import DocDbClient, AuthClient, CacheClient, MinioFileSystem
+from youwol_utils import DocDbClient, AuthClient, CacheClient
+from youwol_utils.clients.file_system.minio_file_system import MinioFileSystem
 from youwol_utils.context import DeployedContextReporter
 from youwol_utils.http_clients.cdn_backend import LIBRARIES_TABLE
 from youwol_utils.middlewares import Middleware

@@ -6,7 +6,8 @@ from minio import Minio
 
 from config_common import get_py_youwol_env, on_before_startup
 from youwol_cdn_backend import Constants, Configuration
-from youwol_utils import LocalDocDbClient, MinioFileSystem
+from youwol_utils import LocalDocDbClient
+from youwol_utils.clients.file_system.minio_file_system import MinioFileSystem
 from youwol_utils.context import ConsoleContextReporter
 from youwol_utils.http_clients.cdn_backend import LIBRARIES_TABLE
 from youwol_utils.servers.fast_api import AppConfiguration, ServerOptions
