@@ -1,10 +1,12 @@
 import os
 
+from minio import Minio
+
 from config_common import on_before_startup, cache_prefix
 
 from youwol_cdn_backend import Configuration, Constants
 
-from youwol_utils import StorageClient, DocDbClient, AuthClient, CacheClient
+from youwol_utils import DocDbClient, AuthClient, CacheClient, MinioFileSystem
 from youwol_utils.context import DeployedContextReporter
 from youwol_utils.http_clients.cdn_backend import LIBRARIES_TABLE
 from youwol_utils.middlewares import Middleware
@@ -19,11 +21,17 @@ async def get_configuration():
     if not_founds:
         raise RuntimeError(f"Missing environments variable: {not_founds}")
 
-    storage = StorageClient(
-        url_base="http://storage/api",
-        bucket_name=Constants.namespace
+    file_system = MinioFileSystem(
+        bucket_name=Constants.namespace,
+        # this root path is for backward compatibility
+        root_path="youwol-users/",
+        client=Minio(
+            endpoint=os.getenv("MINIO_HOST_PORT"),
+            access_key=os.getenv("MINIO_ACCESS_KEY"),
+            secret_key=os.getenv("MINIO_ACCESS_SECRET"),
+            secure=False
+        )
     )
-
     doc_db = DocDbClient(
         url_base="http://docdb/api",
         keyspace_name=Constants.namespace,
@@ -38,7 +46,7 @@ async def get_configuration():
         await on_before_startup(service_config)
 
     service_config = Configuration(
-        storage=storage,
+        file_system=file_system,
         doc_db=doc_db
     )
 
