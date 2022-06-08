@@ -8,6 +8,11 @@ async def local() -> AppConfiguration:
     return await config()
 
 
+async def local_minio() -> AppConfiguration:
+    from config_local_minio import get_configuration as config
+    return await config()
+
+
 async def hybrid() -> AppConfiguration:
     from config_hybrid import get_configuration as config
     return await config()
@@ -22,6 +27,7 @@ app_config = select_configuration_from_command_line(
     {
         "local": local,
         "hybrid": hybrid,
+        "local-minio": local_minio,
         "prod": prod
     }
 )
