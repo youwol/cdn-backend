@@ -61,6 +61,18 @@ spec:
                   key: scope
             - name: AUTH_HOST
               value: {{ .Values.keycloak.host  }}
+            - name: MINIO_HOST_PORT
+              value: {{ .Values.config.environment.MINIO_HOST_PORT }}
+            - name: MINIO_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: minio
+                  key: accesskey
+            - name: MINIO_ACCESS_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: minio
+                  key: secretkey
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}

@@ -15,6 +15,10 @@ imagePullSecrets:
 nameOverride: ""
 fullnameOverride: "cdn-backend"
 
+config:
+  environment:
+    MINIO_HOST_PORT: minio:9000
+
 forceRestart: true
 
 serviceAccount:
