@@ -1,3 +1,4 @@
+chart/charts
 src/.virtualenv
 src/tmp_zips
 .idea
@@ -5,4 +6,3 @@ src/tmp_zips
 src/youwol_utils
 src/youwol_cdn_backend
 **/__pycache__/**/*
-
