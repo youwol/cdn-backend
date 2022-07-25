@@ -2,25 +2,38 @@ import os
 
 from minio import Minio
 
-from config_common import on_before_startup, cache_prefix
-
+from config_common import on_before_startup
 from youwol_cdn_backend import Configuration, Constants
-
-from youwol_utils import DocDbClient, AuthClient, CacheClient
+from youwol_utils import DocDbClient
 from youwol_utils.clients.file_system.minio_file_system import MinioFileSystem
+from youwol_utils.clients.oidc.oidc_config import OidcInfos, PrivateClient
 from youwol_utils.context import DeployedContextReporter
 from youwol_utils.http_clients.cdn_backend import LIBRARIES_TABLE
-from youwol_utils.middlewares import Middleware
-from youwol_utils.servers.fast_api import FastApiMiddleware, AppConfiguration, ServerOptions
+from youwol_utils.middlewares import AuthMiddleware
+from youwol_utils.servers.fast_api import AppConfiguration, ServerOptions, FastApiMiddleware
 
 
 async def get_configuration():
-
-    required_env_vars = ["AUTH_HOST", "AUTH_CLIENT_ID", "AUTH_CLIENT_SECRET", "AUTH_CLIENT_SCOPE"]
+    required_env_vars = [
+        "OPENID_BASE_URL",
+        "OPENID_CLIENT_ID",
+        "OPENID_CLIENT_SECRET",
+        "MINIO_HOST_PORT",
+        "MINIO_ACCESS_KEY",
+        "MINIO_ACCESS_SECRET"
+    ]
 
     not_founds = [v for v in required_env_vars if not os.getenv(v)]
     if not_founds:
         raise RuntimeError(f"Missing environments variable: {not_founds}")
+
+    openid_infos = OidcInfos(
+        base_uri=os.getenv("OPENID_BASE_URL"),
+        client=PrivateClient(
+            client_id=os.getenv("OPENID_CLIENT_ID"),
+            client_secret=os.getenv("OPENID_CLIENT_SECRET")
+        )
+    )
 
     file_system = MinioFileSystem(
         bucket_name=Constants.namespace,
@@ -39,9 +52,6 @@ async def get_configuration():
         table_body=LIBRARIES_TABLE,
         replication_factor=2
     )
-    openid_host = os.getenv("AUTH_HOST")
-    auth_client = AuthClient(url_base=f"https://{openid_host}/auth")
-    cache_client = CacheClient(host="redis-master.infra.svc.cluster.local", prefix=cache_prefix)
 
     async def _on_before_startup():
         await on_before_startup(service_config)
@@ -57,11 +67,10 @@ async def get_configuration():
         base_path="",
         middlewares=[
             FastApiMiddleware(
-                Middleware, {
-                    "auth_client": auth_client,
-                    "cache_client": cache_client,
-                    # healthz need to not be protected as it is used for liveness prob
-                    "unprotected_paths": lambda url: url.path.split("/")[-1] == "healthz"
+                AuthMiddleware, {
+                    'openid_infos': openid_infos,
+                    'predicate_public_path': lambda url:
+                    url.path.endswith("/healthz")
                 }
             )
         ],
