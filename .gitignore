@@ -6,3 +6,4 @@ src/tmp_zips
 src/youwol_utils
 src/youwol_cdn_backend
 **/__pycache__/**/*
+*.iml
