@@ -10,28 +10,22 @@ from youwol_utils.clients.oidc.oidc_config import OidcInfos, PrivateClient
 from youwol_utils.context import DeployedContextReporter
 from youwol_utils.http_clients.cdn_backend import LIBRARIES_TABLE
 from youwol_utils.middlewares import AuthMiddleware
+from youwol_utils.servers.env import Env, OPENID_CLIENT, MINIO
 from youwol_utils.servers.fast_api import AppConfiguration, ServerOptions, FastApiMiddleware
 
 
 async def get_configuration():
-    required_env_vars = [
-        "OPENID_BASE_URL",
-        "OPENID_CLIENT_ID",
-        "OPENID_CLIENT_SECRET",
-        "MINIO_HOST_PORT",
-        "MINIO_ACCESS_KEY",
-        "MINIO_ACCESS_SECRET"
-    ]
+    required_env_vars = OPENID_CLIENT + MINIO
 
     not_founds = [v for v in required_env_vars if not os.getenv(v)]
     if not_founds:
         raise RuntimeError(f"Missing environments variable: {not_founds}")
 
     openid_infos = OidcInfos(
-        base_uri=os.getenv("OPENID_BASE_URL"),
+        base_uri=os.getenv(Env.OPENID_BASE_URL),
         client=PrivateClient(
-            client_id=os.getenv("OPENID_CLIENT_ID"),
-            client_secret=os.getenv("OPENID_CLIENT_SECRET")
+            client_id=os.getenv(Env.OPENID_CLIENT_ID),
+            client_secret=os.getenv(Env.OPENID_CLIENT_SECRET)
         )
     )
 
@@ -40,9 +34,9 @@ async def get_configuration():
         # this root path is for backward compatibility
         root_path="youwol-users/",
         client=Minio(
-            endpoint=os.getenv("MINIO_HOST_PORT"),
-            access_key=os.getenv("MINIO_ACCESS_KEY"),
-            secret_key=os.getenv("MINIO_ACCESS_SECRET"),
+            endpoint=f"{os.getenv(Env.MINIO_HOST)}:9000",
+            access_key=os.getenv(Env.MINIO_ACCESS_KEY),
+            secret_key=os.getenv(Env.MINIO_ACCESS_SECRET),
             secure=False
         )
     )
