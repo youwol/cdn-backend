@@ -1,5 +1,4 @@
 import os
-
 from minio import Minio
 
 from config_common import on_before_startup
@@ -10,7 +9,7 @@ from youwol_utils.clients.oidc.oidc_config import OidcInfos, PrivateClient
 from youwol_utils.context import DeployedContextReporter
 from youwol_utils.http_clients.cdn_backend import LIBRARIES_TABLE
 from youwol_utils.middlewares import AuthMiddleware
-from youwol_utils.servers.env import Env, OPENID_CLIENT, MINIO
+from youwol_utils.servers.env import Env, OPENID_CLIENT, MINIO, minio_endpoint
 from youwol_utils.servers.fast_api import AppConfiguration, ServerOptions, FastApiMiddleware
 
 
@@ -34,7 +33,7 @@ async def get_configuration():
         # this root path is for backward compatibility
         root_path="youwol-users/",
         client=Minio(
-            endpoint=f"{os.getenv(Env.MINIO_HOST)}:9000",
+            endpoint=minio_endpoint(minio_host=os.getenv(Env.MINIO_HOST)),
             access_key=os.getenv(Env.MINIO_ACCESS_KEY),
             secret_key=os.getenv(Env.MINIO_ACCESS_SECRET),
             secure=False
