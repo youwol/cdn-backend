@@ -87,3 +87,27 @@ env:
 # This value is only use in these cases.
 #
 # platformDomain: "platform.domain"
+
+##### Deployment customization ####
+
+# number of replicas: integer
+#
+# Set the number of replicas to maintain in the deployment
+#
+# If not set, will default to 1
+#
+replicas: 2
+
+# resources : object
+#
+# The resources requirement for the application container
+#
+# If not set, no resources requirement are defined
+#
+# resources:
+#   limits:
+#     cpu: 100m
+#     memory: 500m
+#   requests:
+#     cpu: 100m
+#     memory: 500m
